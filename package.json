@@ -1,0 +1,30 @@
+{
+  "name": "appmitienditaonline",
+  "version": "1.0.0",
+  "description": "Esta es una aplicación hecha utilizando MSSQL, NodeJS y React.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andy117/appMiTienditaOnline.git"
+  },
+  "keywords": [
+    "Tienda",
+    "Online",
+    "NodeJS",
+    "React",
+    "SQL",
+    "Server"
+  ],
+  "author": "Anderson Josué Velásquez Usén",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Andy117/appMiTienditaOnline/issues"
+  },
+  "homepage": "https://github.com/Andy117/appMiTienditaOnline#readme",
+  "dependencies": {
+    "express": "4.21.2"
+  }
+}
