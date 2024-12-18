@@ -1,24 +1,21 @@
 import express from 'express'
-import sequelize from './config/db.js'
+import sequelize from './config/dbConfig.js'
+import 'dotenv/config'
+import productRoutes from './routes/productRoutes.js'
+import routerLogin from './routes/authRoutes.js'
 
-const app = express ()
-const PORT = process.env.PORT ?? 3002
+const app = express()
+const PORT = process.env.PORT || 3000
 
-async function testDatabaseConnection() {
-    try{
-        await sequelize.authenticate()
-        console.log('Conexion a la base de datos exitosa!!!')
-    }catch(error){
-        console.error('Hubo un error al conectarse a la DB', error)
-    }
-}
+app.use(express.json())
 
-testDatabaseConnection()
+//defining my routes
+app.use('/api', routerLogin)
+app.use('/api/products', productRoutes)
 
-app.get('/', (req, res) =>{
-    res.send('Servidor funcionando y conectado a la base de datos')
-})
+//testing my db connection
+sequelize.authenticate()
+    .then(() => console.log('Conexion a BD exitosa!!'))
+    .catch(err => console.error('Error al conectar a la BD ', err))
 
-app.listen(PORT, () =>{
-    console.log('Server is running on port http://localhost:'+ PORT)
-})
+app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`))
