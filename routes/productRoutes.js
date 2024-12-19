@@ -8,6 +8,6 @@ const productRoutes = express.Router();
 productRoutes.get('/', verifyToken, getAllProducts)
 productRoutes.post('/', verifyToken, authorizeRole(1), createProduct)
 productRoutes.put('/:id', verifyToken, authorizeRole(1), updateProduct)
-productRoutes.delete('/:id', verifyToken, authorizeRole(1), deleteProduct)
+productRoutes.patch('/:id', verifyToken, authorizeRole(1), deleteProduct)
 
 export default productRoutes

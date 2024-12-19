@@ -1,8 +1,10 @@
 import sequelize from "../config/dbConfig.js"
+import { productSchema, updateProductSchema } from "../models/productModel.js";
+import { z } from 'zod'
 
 export const getAllProducts = async (req, res) => {
     try{
-        const [results] = await sequelize.query('SELECT * FROM Productos')
+        const [results] = await sequelize.query('SELECT * FROM Productos WHERE estados_idEstados <> 1')
         res.json(results);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener los productos', error})
@@ -10,72 +12,67 @@ export const getAllProducts = async (req, res) => {
 }
 
 export const createProduct = async (req, res) => {
-    const { idCategoriaProducto, idMarcaProducto, idPresentacionProducto, idUnidadDeMedidaProducto, nombreProducto, descripcionProducto, codigoProducto, stockProducto, precioProducto, imagenProducto } = req.body
     try {
+        const validatedData = productSchema.parse(req.body)
         await sequelize.query('EXEC sp_AgregarProducto @idCategoriaProducto=:idCategoriaProducto, @idMarcaProducto=:idMarcaProducto, @idPresentacionProducto=:idPresentacionProducto, @idUnidadDeMedidaProducto=:idUnidadDeMedidaProducto, @nombreProducto=:nombreProducto, @descripcionProducto=:descripcionProducto, @codigoProducto=:codigoProducto, @stockProducto=:stockProducto, @precioProducto=:precioProducto, @imagenProducto=:imagenProducto',
             {
-                replacements: { idCategoriaProducto,
-                                idMarcaProducto,
-                                idPresentacionProducto,
-                                idUnidadDeMedidaProducto,
-                                nombreProducto,
-                                descripcionProducto,
-                                codigoProducto,
-                                stockProducto,
-                                precioProducto,
-                                imagenProducto
-                }
+                replacements: validatedData
             })
             res.json({ message: 'Producto creado con exito!! '})
     } catch (error) {
+        if(error instanceof z.ZodError){
+            returnres.status(400).json({ errors: error.errors})
+        }
         res.status(500).json({ message: 'Error al crear producto...', error})
     }
 }
 
 export const updateProduct = async (req, res) => {
     const { id } = req.params
-    const { idProducto, idCategoriaProducto, idMarcaProducto, idPresentacionProducto, idUnidadDeMedidaProducto, nombreProducto, descripcionProducto, codigoProducto, stockProducto, precioProducto, imagenProducto } = req.body
 
     try {
-        await sequelize.query(`EXEC sp_ActualizarProducto
-                                @idProducto:id 
-                                @idCategoriaProducto=:idCategoriaProducto, 
-                                @idMarcaProducto=:idMarcaProducto, 
-                                @idPresentacionProducto=:idPresentacionProducto, 
-                                @idUnidadDeMedidaProducto=:idUnidadDeMedidaProducto, 
-                                @nombreProducto=:nombreProducto, 
-                                @descripcionProducto=:descripcionProducto
-                                @codigoProducto=:codigoProducto, 
-                                @stockProducto=:stockProducto, 
-                                @precioProducto=:precioProducto, 
-                                @imagenProducto=:imagenProducto`,
+        const [product] = await sequelize.query(
+            'SELECT * FROM Productos Where idProductos = :id',
+            { replacements: { id }, type: sequelize.QueryTypes.SELECT }
+        )
+
+        if(!product){
+            return res.status(404).json({ message: 'El producto no existe o ya ha sido eliminado...'})
+        }
+
+        const validatedData = updateProductSchema.parse(req.body)
+        await sequelize.query('EXEC sp_ActualizarProducto @idProducto=:id, @idCategoriaProducto=:idCategoriaProducto, @idMarcaProducto=:idMarcaProducto, @idPresentacionProducto=:idPresentacionProducto, @idUnidadDeMedidaProducto=:idUnidadDeMedidaProducto, @nombreProducto=:nombreProducto, @descripcionProducto=:descripcionProducto, @codigoProducto=:codigoProducto, @stockProducto=:stockProducto, @precioProducto=:precioProducto, @imagenProducto=:imagenProducto',
         {
-            replacements: {
-                id,
-                idCategoriaProducto,
-                idPresentacionProducto,
-                idMarcaProducto,
-                nombreProducto,
-                idUnidadDeMedidaProducto,
-                codigoProducto,
-                descripcionProducto,
-                precioProducto,
-                stockProducto,
-                imagenProducto
-            }
-        })
+            replacements: { id,
+                ...validatedData}
+        }
+    )
+
         res.json({ message: 'Producto actualizado con exito!!!'})
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar producto...', error})
+        if(error instanceof z.ZodError){
+            return res.status(400).json({ errors: error.errors })
+        }
+        console.error('error de actualizacion: ',error)
+        res.status(500).json({ message: 'Error al actualizar producto...', error: error.message})
     }
 }
 
 export const deleteProduct = async (req, res) => {
     const { id } = req.params
     try {
-        await sequelize.query('DELETE FROM Products WHERE idProductos = :id', { replacements: { id }})
-        res.json({ message: 'Producto eliminado exitosamente' })
+        const [product] = await sequelize.query(
+            'SELECT * FROM Productos Where idProductos = :id',
+            { replacements: { id }, type: sequelize.QueryTypes.SELECT }
+        )
+
+        if(!product){
+            return res.status(404).json({ message: 'El producto no existe o ya ha sido eliminado...'})
+        }
+
+        await sequelize.query('EXEC sp_DesactivarProducto @idProducto=:id', { replacements: { id }})
+        res.json({ message: 'Producto eliminado/desactivado exitosamente' })
     } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el producto...', error})
+        res.status(500).json({ message: 'Error al eliminar/desactivar el producto...', error: error.message})
     }
 }
