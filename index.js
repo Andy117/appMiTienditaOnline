@@ -5,6 +5,7 @@ import productRoutes from './routes/productRoutes.js'
 import routerLogin from './routes/authRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import brandRoutes from './routes/brandRoutes.js'
+import presentationRoutes from './routes/presentationRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -16,6 +17,7 @@ app.use('/api', routerLogin)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/brands', brandRoutes)
+app.use('/api/presentations', presentationRoutes)
 
 //testing my db connection
 sequelize.authenticate()
