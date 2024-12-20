@@ -14,6 +14,22 @@ export const getAllClients = async (req, res) => {
 export const createClient = async (req, res) => {
     try {
         const validatedData = clientSchema.parse(req.body)
+
+        const[existingClient] = await sequelize.query(
+            'SELECT * FROM Clientes Where email_cliente = :email OR telefono_cliente = :telefono',
+            { replacements: { email: validatedData.email_cliente, telefono: validatedData.telefono_cliente}, type: sequelize.QueryTypes.SELECT }
+        )
+
+        if(existingClient){
+            return res.status(400).json({
+                message: 'El correo electronico o el telefono ya estan en uso...',
+                errors: {
+                    email_cliente: existingClient.email_cliente === validatedData.email_cliente ? 'Ya existe un cliente con el correo electronico ingresado...': undefined,
+                    telefono_cliente: existingClient.telefono_cliente === validatedData.telefono_cliente ? 'Ya existe un cliente con el numero de telefono ingresado...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_AgregarCliente @razon_social=:razon_social, @nombre_comercial=:nombre_comercial, @direccion_entrega=:direccion_entrega, @telefono_cliente=:telefono_cliente, @email_cliente=:email_cliente',
             {
                 replacements: validatedData
@@ -42,6 +58,25 @@ export const updateClient = async (req, res) => {
         }
 
         const validatedData = updateClientSchema.parse(req.body)
+
+        const [existingClient] = await sequelize.query(
+            'SELECT * FROM Clientes WHERE (email_cliente = :email OR telefono_cliente = :telefono) AND idClientes != id',
+            {
+                replacements: { email: validatedData.email_cliente, telefono: validatedData.telefono_cliente, id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+        
+        if(existingClient){
+            return res.status(400).json({
+                message: 'El correo electronico o el telefono ya esta en uso...',
+                errors:{
+                    email_cliente: existingClient.email_cliente === validatedData.email_cliente ? 'El correo ya esta registrado por otro cliente...': undefined,
+                    telefono_cliente: existingClient.telefono_cliente === validatedData.telefono_cliente ? 'El telefono ya esta registrado por otro cliente...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_ActualizarCliente @idCliente=:id, @razon_social=:razon_social, @nombre_comercial=:nombre_comercial, @direccion_entrega=:direccion_entrega, @telefono_cliente=:telefono_cliente, @email_cliente=:email_cliente',
             {
                 replacements: { ...validatedData, id }
