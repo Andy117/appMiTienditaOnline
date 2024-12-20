@@ -52,7 +52,7 @@ export const updateCategory = async (req, res) => {
         if(error instanceof z.ZodError){
             return res.status(400).json({ errors: error.errors })
         }
-        res.status(500).json({ message: 'Error al actualizar la categoria...', error: error.message})
+        res.status(500).json({ message: 'Error al actualizar la categoria...', error})
     }
 }
 
