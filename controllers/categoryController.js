@@ -14,6 +14,24 @@ export const getAllCategories = async (req, res) => {
 export const createCategory = async (req, res) => {
     try {
         const validatedData = categorySchema.parse(req.body)
+
+        const[existingCategory] = await sequelize.query(
+            'SELECT * FROM CategoriaProductos WHERE nombre_categoria = :nombre_categoria',
+            {
+                replacements: {nombre_categoria: validatedData.nombre_categoria},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingCategory){
+            return res.status(400).json({
+                message: 'La categoria ingresada ya existe...',
+                errors:{
+                    nombre_categoria: existingCategory.nombre_categoria === validatedData.nombre_categoria ? 'La categoria ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_AgregarCategoria @nombre_categoria=:nombre_categoria',
             {
                 replacements: validatedData
@@ -42,6 +60,24 @@ export const updateCategory = async (req, res) => {
         }
 
         const validatedData = updateCategorySchema.parse(req.body)
+
+        const[existingCategory] = await sequelize.query(
+            'SELECT * FROM CategoriaProductos WHERE nombre_categoria = :nombre_categoria AND idCategoriaProductos != :id',
+            {
+                replacements: {nombre_categoria: validatedData.nombre_categoria, id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingCategory){
+            return res.status(400).json({
+                message: 'La categoria ingresada ya existe...',
+                errors:{
+                    nombre_categoria: existingCategory.nombre_categoria === validatedData.nombre_categoria ? 'La categoria ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_ActualizarCategoria @idCategoriaProducto=:id, @nombre_categoria=:nombre_categoria',
             {
                 replacements: {...validatedData, id}
