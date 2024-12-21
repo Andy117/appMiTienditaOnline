@@ -13,4 +13,4 @@ export const productSchema = z.object({
     imagenProducto: z.nullable()
 })
 
-export const updateProductSchema = productSchema.partial()
+export const updateProductSchema = productSchema
