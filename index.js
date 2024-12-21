@@ -10,6 +10,7 @@ import measureRoutes from './routes/measureRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import stateRoutes from './routes/stateRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -26,6 +27,7 @@ app.use('/api/measures', measureRoutes)
 app.use('/api/clients', clientRoutes)
 app.use('/api/states', stateRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/orders', orderRoutes)
 
 //testing my db connection
 sequelize.authenticate()
