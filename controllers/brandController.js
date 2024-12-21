@@ -14,6 +14,24 @@ export const getAllBrands = async (req, res) => {
 export const createBrand = async (req, res) => {
     try {
         const validatedData = brandSchema.parse(req.body)
+
+        const[existingBrand] = await sequelize.query(
+            'SELECT * FROM MarcaProductos WHERE nombre_marca = :nombre_marca',
+            {
+                replacements: {nombre_marca: validatedData.nombre_marca},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingBrand){
+            return res.status(400).json({
+                message: 'La marca ingresada ya existe...',
+                errors:{
+                    nombre_marca: existingBrand.nombre_marca === validatedData.nombre_marca ? 'La marca ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_AgregarMarca @nombre_marca=:nombre_marca',
             {
                 replacements: validatedData
@@ -42,6 +60,24 @@ export const updateBrand = async (req, res) => {
         }
 
         const validatedData = updateBrandSchema.parse(req.body)
+
+        const[existingBrand] = await sequelize.query(
+            'SELECT * FROM MarcaProductos WHERE nombre_marca = :nombre_marca and idMarcaProductos != :id',
+            {
+                replacements: {nombre_marca: validatedData.nombre_marca, id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingBrand){
+            return res.status(400).json({
+                message: 'La marca ingresada ya existe...',
+                errors:{
+                    nombre_marca: existingBrand.nombre_marca === validatedData.nombre_marca ? 'La marca ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_ActualizarMarca @idMarca=:id,@nombre_marca=:nombre_marca',
             {
                 replacements: { ...validatedData, id }
