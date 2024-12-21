@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
-import sequelize from '../config/dbConfig.js' 
+import sequelize from '../config/dbConfig.js'
+import bcrypt from 'bcrypt' 
 
 export const login = async (req, res) => {
     const { email, password } = req.body
@@ -8,7 +9,10 @@ export const login = async (req, res) => {
         const user = results[0]
 
         if(!user) return res.status(404).json({ message: 'Usuario no encontrado... '})
-        if(user.contrasenia !== password) return res.status(401).json({ message: 'Contraseña incorrecta...' })
+
+        const isPasswordValid = await bcrypt.compare(password, user.contrasenia)
+
+        if(!isPasswordValid) return res.status(401).json({ message: 'Contraseña incorrecta...' })
         
         
         const token = jwt.sign( 
@@ -18,7 +22,7 @@ export const login = async (req, res) => {
             }, 
             process.env.JWT_SECRET, 
             { expiresIn: '24h' })
-        res.json({ token })
+        res.json({ Message: 'Datos ingresados correctamente :)',token })
     }catch(error){
         res.status(500).json({ message: 'Error en la autenticacion',error })
     }
