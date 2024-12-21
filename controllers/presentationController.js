@@ -14,6 +14,24 @@ export const getAllPresentations = async (req, res) => {
 export const createPresentation = async (req, res) => {
     try {
         const validatedData = presentationSchema.parse(req.body)
+
+        const[existingPresentation] = await sequelize.query(
+            'SELECT * FROM PresentacionProductos WHERE nombre_presentacion = :nombre_presentacion',
+            {
+                replacements: {nombre_presentacion: validatedData.nombre_presentacion},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingPresentation){
+            return res.status(400).json({
+                message: 'La presentacion ingresada ya existe...',
+                errors:{
+                    nombre_presentacion: existingPresentation.nombre_presentacion === validatedData.nombre_presentacion ? 'La presentacion ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_AgregarPresentacion @nombre_presentacion=:nombre_presentacion',
             {
                 replacements: validatedData
@@ -42,6 +60,24 @@ export const updatePresentation = async (req, res) => {
         }
 
         const validatedData = updatePresentationSchema.parse(req.body)
+
+        const[existingPresentation] = await sequelize.query(
+            'SELECT * FROM PresentacionProductos WHERE nombre_presentacion = :nombre_presentacion AND idPresentacionProductos != :id',
+            {
+                replacements: {nombre_presentacion: validatedData.nombre_presentacion, id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingPresentation){
+            return res.status(400).json({
+                message: 'La presentacion ingresada ya existe...',
+                errors:{
+                    nombre_presentacion: existingPresentation.nombre_presentacion === validatedData.nombre_presentacion ? 'La presentacion ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_ActualizarPresentacion @idPresentacion=:id, @nombre_presentacion=:nombre_presentacion',
             {
                 replacements: { ...validatedData, id }
