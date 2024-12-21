@@ -60,7 +60,7 @@ export const updateClient = async (req, res) => {
         const validatedData = updateClientSchema.parse(req.body)
 
         const [existingClient] = await sequelize.query(
-            'SELECT * FROM Clientes WHERE (email_cliente = :email OR telefono_cliente = :telefono) AND idClientes != id',
+            'SELECT * FROM Clientes WHERE (email_cliente = :email OR telefono_cliente = :telefono) AND idClientes != :id',
             {
                 replacements: { email: validatedData.email_cliente, telefono: validatedData.telefono_cliente, id},
                 type: sequelize.QueryTypes.SELECT
