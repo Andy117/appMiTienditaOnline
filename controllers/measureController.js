@@ -14,6 +14,24 @@ export const getAllMeasure = async (req, res) => {
 export const createMeasure = async (req, res) => {
     try {
         const validatedData = measureSchema.parse(req.body)
+
+        const[existingMeasure] = await sequelize.query(
+            'SELECT * FROM UnidadDeMedidaProductos WHERE nombre_unidad = :nombre_unidad',
+            {
+                replacements: {nombre_unidad: validatedData.nombre_unidad},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingMeasure){
+            return res.status(400).json({
+                message: 'La unidad de medida ingresada ya existe...',
+                errors:{
+                    nombre_unidad: existingMeasure.nombre_unidad === validatedData.nombre_unidad ? 'La unidad de medida ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_AgregarUnidadMedida @nombre_UnidadMedida=:nombre_unidad',
             {
                 replacements: validatedData
@@ -41,6 +59,24 @@ export const updateMeasure = async (req, res) => {
         }
 
         const validatedData = updateMeasureSchema.parse(req.body)
+
+        const[existingMeasure] = await sequelize.query(
+            'SELECT * FROM UnidadDeMedidaProductos WHERE nombre_unidad = :nombre_unidad AND idUnidadMedida != :id',
+            {
+                replacements: {nombre_unidad: validatedData.nombre_unidad,id},
+                type: sequelize.QueryTypes.SELECT
+            }
+        )
+
+        if(existingMeasure){
+            return res.status(400).json({
+                message: 'La unidad de medida ingresada ya existe...',
+                errors:{
+                    nombre_unidad: existingMeasure.nombre_unidad === validatedData.nombre_unidad ? 'La unidad de medida ya existe...': undefined
+                }
+            })
+        }
+
         await sequelize.query('EXEC sp_ActualizarUnidadMedida @idUnidadMedida=:id, @nombre_UnidadMedida=:nombre_unidad',
             {
                 replacements: { ...validatedData, id }
