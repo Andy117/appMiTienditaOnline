@@ -42,4 +42,6 @@ Gestión de roles y permisos (Operadores y Clientes)
 ### DOCUMENTACIÓN DE LA API
 La API fué testeada utilizando POSTMAN, la documentación completa la pueden encontrar [AQUÍ](https://documenter.getpostman.com/view/35529959/2sAYJ3FMhh)
 
+De antemano, gracias por la oportunidad y el tiempo que se toman revisando nuestros proyectos 🙏
+
 `## Autor: Anderson Josué Velásquez Usén (GDA00109-OT)`
