@@ -11,10 +11,13 @@ import clientRoutes from './routes/clientRoutes.js'
 import stateRoutes from './routes/stateRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
+import corsOptions from './middleware/corsMiddleware.js'
+import cors from 'cors'
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
+app.use(cors(corsOptions))
 app.use(express.json())
 
 //defining my routes
