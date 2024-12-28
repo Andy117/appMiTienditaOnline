@@ -4,6 +4,13 @@ El reto de la segunda semana consistió en la instalación de NodeJS, Express, P
 ## Tecnologias utilizadas
 Se utilizó Node.js para el backend, Express como framework para la creación de la API REST, Sequelize como ORM, y SQL Server como sistema de base de datos.
 
+## Funcionamiento del proyecto
+Para hacer que el proyecto comience a funcionar basta con escribir en la linea de comandos:
+```
+npm run dev
+```
+Esto hará que el servidor comience a ejecutarse en el puerto 1234, en caso este esté ocupado, se ejecutará en el puerto 3000
+
 ## Contenido de mi archivo .env
 No es buena práctica el compartir las variables de entorno, sin embargo, en esta ocasión serán compartidas dichas variables.
 ```
@@ -41,3 +48,7 @@ Gestión de roles y permisos (Operadores y Clientes)
 
 ### DOCUMENTACIÓN DE LA API
 La API fué testeada utilizando POSTMAN, la documentación completa la pueden encontrar [AQUÍ](https://documenter.getpostman.com/view/35529959/2sAYJ3FMhh)
+
+De antemano, gracias por la oportunidad y el tiempo que se toman revisando nuestros proyectos 🙏
+
+`## Autor: Anderson Josué Velásquez Usén (GDA00109-OT)`
