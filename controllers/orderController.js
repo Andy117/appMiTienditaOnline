@@ -70,6 +70,85 @@ export const getAllOrdersWithDetails = async (req, res) => {
     }
 };
 
+export const getAllOrdersWithDetailsUsingID = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const results = await sequelize.query('EXEC sp_ObtenerOrdenPorID @idOrden=:id',
+            {
+                replacements: { id }, type: sequelize.QueryTypes.SELECT
+            }
+        );
+
+        if (!results || results.length === 0) {
+            return res.status(404).json({ message: 'La Orden no existe o ya ha sido eliminada...' });
+        }
+
+        const ordersMap = new Map();
+
+        results.forEach(row => {
+            const {
+                OrdenID,
+                nombre_completo,
+                direccion,
+                telefono,
+                correo_electronico,
+                fecha_entrega,
+                total_orden,
+                DetalleID,
+                ProductoID,
+                ProductoNombre,
+                ProductoDescripcion,
+                ProductoPrecio,
+                cantidad,
+                subtotal,
+                EstadoID,
+                Estado_De_La_Orden
+            } = row;
+
+            // Verifica si la orden ya existe en el mapa
+            if (!ordersMap.has(OrdenID)) {
+                ordersMap.set(OrdenID, {
+                    OrdenID,
+                    EstadoID,
+                    Estado_De_La_Orden,
+                    nombre_completo,
+                    direccion,
+                    telefono,
+                    correo_electronico,
+                    fecha_entrega,
+                    total_orden,
+                    DetallesOrden: [] // Inicializa el array de detalles
+                });
+            }
+
+            // Agrega el detalle a la orden correspondiente
+            ordersMap.get(OrdenID).DetallesOrden.push({
+                DetalleID,
+                ProductoID,
+                ProductoNombre,
+                ProductoDescripcion,
+                ProductoPrecio,
+                cantidad,
+                subtotal
+            });
+        });
+
+        const orders = Array.from(ordersMap.values());
+
+        return res.status(200).json({
+            success: true,
+            data: orders,
+        });
+    } catch (error) {
+        console.error('Error al obtener las ordenes con sus detalles:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al obtener las órdenes con sus detalles.',
+            error: error.message,
+        });
+    }
+};
+
 
 export const createOrder = async (req, res) => {
     try {
