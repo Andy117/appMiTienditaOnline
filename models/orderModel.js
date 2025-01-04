@@ -78,7 +78,7 @@ export const updateOrderStatusSchema = z.object({
         required_error: "El ID del estado es obligatorio... puede elegir entre: 3 = Pendiente, 4 = Aprobado, 5 = Rechazado, 6 = En proceso, 7 = Enviado, 8 = Entregado, 9 = Cancelado",
         invalid_type_error: "El ID del estado no es válido, puede elegir entre: 3 = Pendiente, 4 = Aprobado, 5 = Rechazado, 6 = En proceso, 7 = Enviado, 8 = Entregado, 9 = Cancelado",
     })
-});
+})
 
 export const updateOrderSchema = z.object({
     nombreCompleto: z.string({
@@ -98,3 +98,4 @@ export const updateOrderSchema = z.object({
         invalid_type_error: 'El correo electronico debe ser una cadena de texto...'
     }).email({ message: 'El correo electronico debe de cumplir con el formato usuario@dominio.com' })
 })
+
