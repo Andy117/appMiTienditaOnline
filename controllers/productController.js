@@ -1,29 +1,59 @@
 import sequelize from "../config/dbConfig.js"
 import { productSchema, updateProductSchema } from "../models/productModel.js";
 import { z } from 'zod'
+import multer from 'multer'
+import path from 'path'
+
+const storage = multer.memoryStorage()
+const upload = multer({ storage })
 
 export const getAllProducts = async (req, res) => {
-    try{
-        const [results] = await sequelize.query('SELECT * FROM Productos WHERE estados_idEstados <> 1')
-        res.json(results);
+    try {
+        const page = parseInt(req.query.page, 10) || 1; 
+        const limit = parseInt(req.query.limit, 10) || 15; 
+        const offset = (page - 1) * limit; 
+
+        const [totalResults] = await sequelize.query(
+            'SELECT COUNT(*) AS total FROM Productos WHERE estados_idEstados <> 1'
+        );
+        const total = totalResults[0].total; 
+        const [products] = await sequelize.query(
+            `SELECT * FROM Productos WHERE estados_idEstados <> 1 ORDER BY idProductos OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+            {
+                replacements: { offset, limit },
+            }
+        );
+
+        res.json({
+            products,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener los productos', error})
+        res.status(500).json({ message: 'Error al obtener los productos', error });
     }
-}
+};
+
 
 export const createProduct = async (req, res) => {
     try {
         const validatedData = productSchema.parse(req.body)
+
+        const imagenBuffer = req.file?.buffer || null
+
         await sequelize.query('EXEC sp_AgregarProducto @idCategoriaProducto=:idCategoriaProducto, @idMarcaProducto=:idMarcaProducto, @idPresentacionProducto=:idPresentacionProducto, @idUnidadDeMedidaProducto=:idUnidadDeMedidaProducto, @nombreProducto=:nombreProducto, @descripcionProducto=:descripcionProducto, @codigoProducto=:codigoProducto, @stockProducto=:stockProducto, @precioProducto=:precioProducto, @imagenProducto=:imagenProducto',
             {
-                replacements: validatedData
+                replacements: { ...validatedData, imagenProducto: imagenBuffer},
+                type: sequelize.QueryTypes.RAW
             })
             res.json({ message: 'Producto creado con exito!! '})
     } catch (error) {
         if(error instanceof z.ZodError){
-            returnres.status(400).json({ errors: error.errors})
+            return res.status(400).json({ errors: error.errors})
         }
-        res.status(500).json({ message: 'Error al crear producto...', error})
+        res.status(500).json({ message: 'Error al crear producto...', error: error.message})
+        console.log(error)
     }
 }
 
