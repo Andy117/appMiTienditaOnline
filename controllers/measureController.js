@@ -2,6 +2,35 @@ import sequelize from "../config/dbConfig.js"
 import { z } from 'zod'
 import { measureSchema, updateMeasureSchema } from "../models/mesUnityModel.js"
 
+export const getAllMeasurePagination = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1
+        const limit = parseInt(req.query.limit, 10) || 15
+        const offset = (page - 1) * limit
+
+        const [totalResults] = await sequelize.query(
+            'SELECT COUNT(*) AS total FROM UnidadDeMedidaProductos'
+        )
+
+        const total = totalResults[0].total; 
+
+        const [measure] = await sequelize.query(
+            `SELECT * FROM UnidadDeMedidaProductos ORDER BY idUnidadMedida OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+            {
+                replacements: { offset, limit },
+            }
+        )
+        res.json({
+            measure,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit)
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener las marcas...', error})
+    }
+}
+
 export const getAllMeasure = async (req, res) => {
     try {
         const[measure] = await sequelize.query('SELECT * FROM UnidadDeMedidaProductos')
@@ -109,5 +138,26 @@ export const deleteMeasure = async (req, res) => {
         res.json({ message: 'Unidad de medida desactivada con exito!!!' })
     } catch (error) {
         res.status(500).json({ message: 'Hubo un problema al desactivar la unidad de medida...', error })
+    }
+}
+
+export const activateMeasure = async (req, res) => {
+    const { id } = req.params
+    try {
+        const[measure] = await sequelize.query(
+            'SELECT * FROM UnidadDeMedidaProductos WHERE idUnidadMedida = :id',
+            {replacements: { id }, type: sequelize.QueryTypes.SELECT}
+        )
+
+        if(!measure){
+            return res.status(404).json({ message: 'La presentacion no existe o ya ha sido eliminada'})
+        }
+
+        await sequelize.query('EXEC sp_ActivarUnidadMedida @idUnidadMedidaProducto=:id',
+            {replacements: { id }, type: sequelize.QueryTypes.SELECT}
+        )
+        res.json({ message: 'Unidad de medida activada con exito!!!' })
+    } catch (error) {
+        res.status(500).json({ message: 'Hubo un problema al activar la unidad de medida...', error })
     }
 }
