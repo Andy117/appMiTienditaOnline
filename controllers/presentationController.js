@@ -2,6 +2,36 @@ import sequelize from "../config/dbConfig.js"
 import { z } from 'zod'
 import { presentationSchema, updatePresentationSchema } from "../models/presentationModel.js"
 
+export const getAllPresentationPagination = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1
+        const limit = parseInt(req.query.limit, 10) || 15
+        const offset = (page - 1) * limit
+
+        const [totalResults] = await sequelize.query(
+            'SELECT COUNT(*) AS total FROM PresentacionProductos'
+        )
+
+        const total = totalResults[0].total; 
+
+        const [presentation] = await sequelize.query(
+            `SELECT * FROM PresentacionProductos ORDER BY idPresentacionProductos OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+            {
+                replacements: { offset, limit },
+            }
+        )
+        res.json({
+            presentation,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit)
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener las marcas...', error})
+    }
+}
+
+
 export const getAllPresentations = async (req, res) => {
     try {
         const[presentations] = await sequelize.query('SELECT * FROM PresentacionProductos')
@@ -111,5 +141,27 @@ export const deletePresentation = async(req, res) =>{
         res.json({ message: 'Presentacion desactivada/eliminada con exito!!!' })
     } catch (error) {
         res.status(500).json({ message: 'Hubo un problema al desactivar/eliminar la presentacion... ', error })
+    }
+}
+
+export const activatePresentation = async(req, res) =>{
+    const { id } = req.params
+    try {
+        const[presentation] = await sequelize.query(
+            'SELECT * FROM PresentacionProductos WHERE idPresentacionProductos = :id',
+            {replacements:{ id }, type: sequelize.QueryTypes.SELECT}
+        )
+
+        if(!presentation){
+            return res.status(404).json({ message: 'La presentacion no existe o ya ha sido eliminada...'})
+        }
+        await sequelize.query('EXEC sp_ActivarPresentacion @idPresentacionProducto=:id',
+            {
+                replacements: { id }, type: sequelize.QueryTypes.SELECT
+            }
+        )
+        res.json({ message: 'Presentacion activada con exito!!!' })
+    } catch (error) {
+        res.status(500).json({ message: 'Hubo un problema al activar la presentacion... ', error })
     }
 }
