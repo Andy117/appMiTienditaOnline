@@ -11,6 +11,36 @@ export const getAllClients = async (req, res) => {
     }
 }
 
+export const getAllClientsPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1
+        const limit = parseInt(req.query.limit, 10) || 15
+        const offset = (page - 1) * limit
+
+        const [totalResults] = await sequelize.query(
+            'SELECT COUNT(*) AS total FROM Clientes'
+        )
+
+        const total = totalResults[0].total; 
+
+        const [client] = await sequelize.query(
+            `SELECT * FROM Clientes ORDER BY idClientes OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+            {
+                replacements: { offset, limit },
+            }
+        )
+        res.json({
+            client,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit)
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener las marcas...', error})
+    }
+}
+
+
 export const createClient = async (req, res) => {
     try {
         const validatedData = clientSchema.parse(req.body)
@@ -109,5 +139,25 @@ export const deleteClient = async (req, res) => {
         res.json({ message: 'Cliente eliminado/desactivado exitosamente!!' })
     } catch (error) {
         res.status(500).json({ message: 'Hubo un problema al eliminar/desactivar al cliente... ', error })
+    }
+}
+export const activateClient = async (req, res) => {
+    const { id } = req.params
+    try {
+        const[client] = await sequelize.query(
+            'SELECT * FROM Clientes WHERE idClientes = :id',
+            {replacements: { id }, type: sequelize.QueryTypes.SELECT}
+        )
+        
+        if(!client){
+            return res.status(404).json({ message: 'El cliente no existe o ya ha sido eliminada...'})
+        }
+
+        await sequelize.query('EXEC sp_ActivarCliente @idCliente=:id',
+            {replacements: {id}, type: sequelize.QueryTypes.SELECT}
+        )
+        res.json({ message: 'Cliente activado exitosamente!!' })
+    } catch (error) {
+        res.status(500).json({ message: 'Hubo un problema al activado al cliente... ', error })
     }
 }
