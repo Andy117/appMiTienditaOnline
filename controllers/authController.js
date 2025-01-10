@@ -10,15 +10,22 @@ export const login = async (req, res) => {
 
         if(!user) return res.status(404).json({ message: 'Usuario no encontrado... '})
 
+            if (user.estados_idEstados !== 2) {
+                return res.status(403).json({ message: 'Tu cuenta está inactiva o deshabilitada. Por favor, contacta al administrador.' });
+            }
+
         const isPasswordValid = await bcrypt.compare(password, user.contrasenia)
 
         if(!isPasswordValid) return res.status(401).json({ message: 'Contraseña incorrecta...' })
         
-        
         const token = jwt.sign( 
             {
                 id: user.idUsuarios,
-                rol_id: user.rol_idRol
+                rol_id: user.rol_idRol,
+                idUsuario: user.idUsuarios,
+                nombreCompleto: user.nombre_completo,
+                correoElectronico: user.correo_electronico,
+                telefono: user.telefono
             }, 
             process.env.JWT_SECRET, 
             { expiresIn: '24h' })
