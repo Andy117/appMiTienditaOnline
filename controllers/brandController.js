@@ -2,6 +2,35 @@ import sequelize from "../config/dbConfig.js"
 import { z } from 'zod'
 import { brandSchema, updateBrandSchema } from "../models/brandModel.js"
 
+export const getAllBrandsPagination = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1
+        const limit = parseInt(req.query.limit, 10) || 15
+        const offset = (page - 1) * limit
+
+        const [totalResults] = await sequelize.query(
+            'SELECT COUNT(*) AS total FROM MarcaProductos'
+        )
+
+        const total = totalResults[0].total; 
+
+        const [brands] = await sequelize.query(
+            `SELECT * FROM MarcaProductos ORDER BY idMarcaProductos OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
+            {
+                replacements: { offset, limit },
+            }
+        )
+        res.json({
+            brands,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit)
+        })
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener las categorias...', error})
+    }
+}
+
 export const getAllBrands = async (req, res) => {
     try {
         const[brands] = await sequelize.query('SELECT * FROM MarcaProductos')
@@ -113,6 +142,30 @@ export const deleteBrand = async (req, res) => {
         res.json({ message: 'Marca eliminada/desactivada con exito!!'})
     } catch (error) {
         res.status(500).json({ message: 'Hubo un problema al eliminar/desactivar la Marca', error})
+        //console.log(error)
+    }
+}
+export const activateBrand = async (req, res) => {
+    const { id } = req.params
+
+    try {
+        const[brand] = await sequelize.query(
+            'SELECT * FROM MarcaProductos WHERE idMarcaProductos = :id',
+            {replacements: { id } , type: sequelize.QueryTypes.SELECT}
+        )
+        
+        if(!brand){
+            return res.status(404).json({ message: 'La categoria no existe o ya ha sido eliminada...'})
+        }
+        
+        await sequelize.query('EXEC sp_ActivarMarca @idMarcaProducto=:id',
+            {
+                replacements: { id }, type: sequelize.QueryTypes.SELECT
+            }
+        )
+        res.json({ message: 'Marca activada con exito!!'})
+    } catch (error) {
+        res.status(500).json({ message: 'Hubo un problema al activar la Marca', error})
         //console.log(error)
     }
 }
