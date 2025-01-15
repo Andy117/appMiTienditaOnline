@@ -162,7 +162,22 @@ export const createProduct = async (req, res) => {
     try {
         const validatedData = productSchema.parse(req.body)
 
-        const imagenBuffer = req.file?.buffer || null
+        let imagenBuffer = req.file?.buffer || null
+
+        if(imagenBuffer){
+            imagenBuffer = await sharp(imagenBuffer)
+            .resize ( 800, 800, {
+                fit: 'inside',
+                withoutEnlargement: true
+            })
+            .jpeg({
+                quality: 80,
+                progressive: true
+            })
+            .toBuffer()
+        }else{
+            imagenBuffer = null
+        }
 
         await sequelize.query('EXEC sp_AgregarProducto @idCategoriaProducto=:idCategoriaProducto, @idMarcaProducto=:idMarcaProducto, @idPresentacionProducto=:idPresentacionProducto, @idUnidadDeMedidaProducto=:idUnidadDeMedidaProducto, @nombreProducto=:nombreProducto, @descripcionProducto=:descripcionProducto, @codigoProducto=:codigoProducto, @stockProducto=:stockProducto, @precioProducto=:precioProducto, @imagenProducto=:imagenProducto',
             {
